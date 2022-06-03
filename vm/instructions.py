@@ -28,7 +28,8 @@ def opPush1(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
 
 @dataclass
 class EVMInstruction:
-    # Do we care about the 2 bytes next door?
+    # Do we care about the N bytes next door?
+    immediate_value: bool
     gas_cost: int
     execute: object
 
@@ -36,6 +37,7 @@ class EVMInstruction:
 ReferenceTable: dict = {
 
     Opcode.PUSH1 : EVMInstruction(
+        immediate_value=True,
         gas_cost=0,
         execute=opPush1,
     ), 
