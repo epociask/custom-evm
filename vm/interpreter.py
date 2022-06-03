@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from vm.contract import Contract
 from vm.memory import Memory
 from vm.stack import Stack

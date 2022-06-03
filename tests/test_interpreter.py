@@ -13,6 +13,31 @@ NOTE: All test cases were written out by hand (opcode, bytecode) before validate
 #    _input: str
 #    assertions: object
 
+def test_interpreter_push_1():
+    result = bytearray.fromhex("61 1111 00")
+    
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
+
+    assert interpreter.scope_ctx.stack.pop() == 0x1111; "Ensuring resultant stack value is 2 bytes pushed 0x1111"
+
+def test_interpreter_push_2():
+    """
+    ASSEMBLY VIEW:
+    #0  PUSH4 0x11111111
+    #6  PUSH12 0x010101011001100110010110
+    #20 STOP
+    """
+    result = bytearray.fromhex("63 11111111 6B 010101011001100110010110 00")
+    
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
+
+    assert interpreter.scope_ctx.stack.pop() == 0x010101011001100110010110; "Ensuring 12 byte value is pushed on stack properly"
+    assert interpreter.scope_ctx.stack.pop() == 0x11111111; "Ensuring 4 byte value is pushed on stack properly"
+
 def test_interpreter_add():
     result = bytearray.fromhex("6080 6040 01")
     
@@ -117,3 +142,46 @@ def test_jump_1():
 
     assert interpreter.scope_ctx.stack.pop() == 6; "Ensuring resultant stack value is 4+2"
 
+def test_jump_conditional_0():
+    """
+    ASSEMBLY VIEW:
+    #0  PUSH1 0x04
+    #2  PUSH1 0x04
+    #4  EQ
+    #5  PUSH1 0x0B
+    #7  JUMPI
+    #8  PUSH1 0x09
+    #10 STOP
+    #11 JUMPDEST
+    #12 PUSH1 0x08
+    #14 STOP
+    """
+    result = bytearray.fromhex("6004 6004 14 600B 57 60 09 00 5B 60 08 00")
+    
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
+
+    assert interpreter.scope_ctx.stack.pop() == 0x08; "Ensuring resultant stack value is 0x08"
+
+def test_jump_conditional_1():
+    """
+    ASSEMBLY VIEW: 
+    #0  PUSH1 0x04
+    #2  PUSH1 0x03
+    #4  EQ
+    #5  PUSH1 0x0B
+    #7  JUMPI
+    #8  PUSH1 0x09
+    #10 STOP
+    #11 JUMPDEST
+    #12 PUSH1 0x08
+    #14 STOP
+    """
+    result = bytearray.fromhex("6004 6003 14 600B 57 60 09 00 5B 60 08 00")
+    
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
+
+    assert interpreter.scope_ctx.stack.pop() == 0x09; "Ensuring resultant stack value is 0x08"
