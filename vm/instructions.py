@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import numpy
+import sha3
 
 from vm.opcode import Opcode
 from vm.pc import ProgramCounter
@@ -62,94 +63,134 @@ def opJump(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
 def opJumpDest(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     pass
 
+def opJumpI(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    dest, cond = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+
+    if cond:
+        pc.set(dest)
+
+
 def opLt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     c = (a < b)
 
     scope_ctx.stack.push(c)
 
 def opGt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     c = (a > b)
 
     scope_ctx.stack.push(c)
 
 def opEq(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+    print("Comparing ", a, b)
     c = (a == b)
 
     scope_ctx.stack.push(c)
 
 def opIsZero(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     a = scope_ctx.stack.pop()
     c = (a == 0)
 
     scope_ctx.stack.push(c)
 
 def opAnd(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     c = (a & b) #bitwise and
 
     scope_ctx.stack.push(c)
 
 def opOr(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     c = (a | b) #bitwise or
 
     scope_ctx.stack.push(c)
 
 def opXor(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     c = (a ^ b)
 
     scope_ctx.stack.push(c)
 
 def opNot(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     a = scope_ctx.stack.pop()
     c = not(a)
     
     scope_ctx.stack.push(c)
 
 def opByte(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     i, x = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     y = (x >> (248 - i * 8)) & 0xFF
 
     scope_ctx.stack.push(y)
 
 def opShl(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     result = numpy.left_shift(value, shift)
 
     scope_ctx.stack.push(result)
 
 def opShr(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     result = numpy.right_shift(value, shift)
 
     scope_ctx.stack.push(result)
 
 def opSar(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    #TODO: Test me
     shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     result = value >> shift
 
     scope_ctx.stack.push(result)
 
 def opSha3(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    pass
+    #TODO: Test me
+    offset = scope_ctx.stack.pop()
+    value = scope_ctx.mem.get(offset)
 
-def opPush1(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    ## 1. get 1 byte immediate value & update PC properly
+    hasher = sha3.keccak_256()
+    hasher.update(value)
+    
+    scope_ctx.push(hasher.hexidigest())
 
-    pc.increment()
+def opMload(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    offset = scope_ctx.stack.pop()
+    val = scope_ctx.mem.get(offset)
 
-    push_value: bytes = scope_ctx.code[pc.get()] ## get next 1 BYTE
+    scope_ctx.stack.push(val)
 
-    ## 2. push immediate value to stack
-    scope_ctx.stack.push(push_value)
+def opMstore(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    value, offset = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+
+    scope_ctx.mem.store(offset, value)
+
+def makePushOp(byte_count: int):
+
+    def pushN(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+        pc.increment()
+        byte_val = scope_ctx.code[pc.get() : pc.get() + byte_count]
+        int_val = int.from_bytes(byte_val, "big") #BIG Endian ordering man
+        
+        pc.increment(byte_count-1)
+        scope_ctx.stack.push(int_val)
+
+
+    return pushN
 
 @dataclass
 class EVMInstruction:
-    # Do we care about the N bytes next door?
     gas_cost: int
     execute: object
 
@@ -162,8 +203,225 @@ ReferenceTable: dict = {
         immediate_value=True,
         immediate_size=1,
         gas_cost=0,
-        execute=opPush1,
+        execute=makePushOp(1),
+    ),
+
+    Opcode.PUSH2 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(2),
     ), 
+
+    Opcode.PUSH3 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(3),
+    ), 
+
+    Opcode.PUSH4 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(4),
+    ), 
+
+    Opcode.PUSH5 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(5),
+    ), 
+
+    Opcode.PUSH6 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(6),
+    ), 
+
+    Opcode.PUSH8 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(8),
+    ), 
+
+    Opcode.PUSH9 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(9),
+    ), 
+
+    Opcode.PUSH10 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(10),
+    ), 
+
+    Opcode.PUSH11 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(11),
+    ), 
+
+    Opcode.PUSH12 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(12),
+    ),
+
+    Opcode.PUSH13 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(13),
+    ), 
+
+    Opcode.PUSH14 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(14),
+    ), 
+
+    Opcode.PUSH15 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(15),
+    ), 
+
+    Opcode.PUSH16 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(16),
+    ), 
+
+    Opcode.PUSH17 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(17),
+    ), 
+
+    Opcode.PUSH18 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(18),
+    ), 
+
+    Opcode.PUSH19 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(19),
+    ), 
+
+    Opcode.PUSH20 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(20),
+    ), 
+
+    Opcode.PUSH21 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(21),
+    ), 
+
+    Opcode.PUSH22 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(22),
+    ), 
+
+    Opcode.PUSH23 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(23),
+    ), 
+
+    Opcode.PUSH24 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(24),
+    ), 
+
+    Opcode.PUSH25 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(25),
+    ), 
+
+    Opcode.PUSH25 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(25),
+    ), 
+    
+    Opcode.PUSH26 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(26),
+    ),
+
+    Opcode.PUSH27 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(27),
+    ), 
+
+    Opcode.PUSH28 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(28),
+    ), 
+    
+    Opcode.PUSH29 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(29),
+    ),  
+
+    Opcode.PUSH30 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(30),
+    ), 
+    
+    Opcode.PUSH31 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(31),
+    ),
+
+    Opcode.PUSH32 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makePushOp(32),
+    ),
 
     Opcode.ADD : EVMInstruction(
         gas_cost=0,
@@ -219,6 +477,11 @@ ReferenceTable: dict = {
     Opcode.JUMP : EVMInstruction(
         gas_cost=0,
         execute=opJump,
+    ),
+
+    Opcode.JUMPI : EVMInstruction(
+        gas_cost=0,
+        execute=opJumpI,
     ),
 
     Opcode.JUMPDEST : EVMInstruction(

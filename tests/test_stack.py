@@ -1,14 +1,6 @@
 import vm.stack as stack
 
 
-class Operation:
-    insert: bool
-    item: bytes
-
-class TestCase:
-    operations: list = []
-
-
 def test_stack_insert():
     s = stack.Stack()
 
