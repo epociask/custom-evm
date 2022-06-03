@@ -1,17 +1,11 @@
 from dataclasses import dataclass
+from importlib.resources import open_text
 from vm.interpreter import EVMInterpreter
 from vm.contract import Contract
 
 """
 NOTE: All test cases were written out by hand (opcode, bytecode) before validated against VM interpreter
 """
-
-## TODO: Modularize tests
-#@dataclass
-#class TestCase:
-#    file_dir: str
-#    _input: str
-#    assertions: object
 
 def test_interpreter_push_1():
     result = bytearray.fromhex("61 1111 00")
@@ -97,6 +91,85 @@ def test_interpreter_arithmetic_2():
     interpreter.run(contract)
 
     assert interpreter.scope_ctx.stack.pop() == (1/2); "Ensuring resultant stack value is (1/2)"
+def test_interpreter_arithmetic_2():
+    """
+    ASSEMBLY VIEW:
+        #0  PUSH1 0x02
+        #2  PUSH1 0x03
+        #4  PUSH1 0x04
+        #6  PUSH1 0x06
+        #8  PUSH1 0x02
+        #10 PUSH1 0x03
+        #12 PUSH1 0x02
+        #14 ADDMOD
+        #15 EXP
+        #16 MULMOD
+        #18 STOP
+    """
+    #NOTE: ADDMOD(2,3,2) -> EXP (x, 6) -> MULMOD(x,4,3) -> DIV(x,2) = 1/2
+    result = bytearray.fromhex("6002 6003 6004 6006 6002 6003 6002 08 0A 09 04 00")
+    
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
+
+    assert interpreter.scope_ctx.stack.pop() == (1/2); "Ensuring resultant stack value is (1/2)"
+
+def test_bitwise():
+    """
+    ASSEMBLY VIEW:
+    #0 PUSH1 0x50
+    #2 PUSH1 0xA0
+    #4 OPERATION 
+    #5 STOP
+    """
+    # AND, OR, XOR#
+    op_tests = [
+        {"opcode": "16", "expected": 0b00000000},
+        {"opcode": "17", "expected": 0b11110000},
+        {"opcode": "18", "expected": 0b11110000},
+        ]
+
+    for test in op_tests:
+        op = test["opcode"]
+        result = bytearray.fromhex(f"6050 60A0 {op} 00")
+    
+        contract = Contract(result, None)
+        interpreter = EVMInterpreter()
+        interpreter.run(contract)
+
+        expected = test["expected"]
+        assert interpreter.scope_ctx.stack.pop() == expected; f"Ensuring resultant stack value is {expected}"
+
+def test_shifts():
+    """
+    ASSEMBLY VIEW:
+    #0 PUSH1 0x02
+    #2 PUSH1 0xA0
+    #4 OPERATION 
+    #5 STOP
+    """
+    # SHL, SHR, SAR#
+    op_tests = [
+        # PUSH1 0x02 #PUSH1 0xFF #SHL #STOP 
+        {"bytecode": "60FF 6002 1B 00", "expected": 0b11111100},
+
+        # {"opcode": "1C", "expected": 0b11110000},
+        # {"opcode": "1D", "expected": 0b11110000},
+        ]
+
+    for test in op_tests:
+        instructions = test["bytecode"]
+        result = bytearray.fromhex(instructions)
+    
+        contract = Contract(result, None)
+        interpreter = EVMInterpreter()
+        interpreter.run(contract)
+
+        expected = test["expected"]
+        assert interpreter.scope_ctx.stack.pop() == expected; f"Ensuring resultant stack value is {expected}"
+
+
 
 def test_jump_0():
     """

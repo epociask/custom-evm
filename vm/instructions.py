@@ -7,24 +7,28 @@ from vm.pc import ProgramCounter
 from vm.scope_ctx import  ScopeContext
 
 """
-Instruction logic taken from pseudocode presented in https://www.ethervm.io/ 
+Instruction logic taken from pseudocode presented in:
+    * https://www.ethervm.io/ 
+    * https://ethereum.org/en/developers/docs/evm/opcodes/
 """
-
+##                                   ##
+#   Instruction defintion functions   #
+##                                   ##
 def opAdd(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    z = x + y
+    z: int = x + y
 
     scope_ctx.stack.push(z)
 
 def opSub(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    z = x - y
+    z: int = x - y
 
     scope_ctx.stack.push(z)
 
 def opMul(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    z = x * y
+    z: int = x * y
 
     scope_ctx.stack.push(z)
 
@@ -36,23 +40,23 @@ def opDiv(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
 
 def opMod(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    z = x % y
+    z: int = x % y
 
     scope_ctx.stack.push(z)
 
 def opAddMod(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     x, y, n = scope_ctx.stack.pop(), scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    z = (x+y) % n
+    z: int = (x+y) % n
     scope_ctx.stack.push(z)
 
 def opMulMod(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     x, y, n = scope_ctx.stack.pop(), scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    z = (x*y) % n
+    z: int = (x*y) % n
     scope_ctx.stack.push(z)
 
 def opExp(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    z = x ** y
+    z: int = x ** y
 
     scope_ctx.stack.push(z)
 
@@ -73,14 +77,14 @@ def opJumpI(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
 def opLt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c = (a < b)
+    c: bool = (a < b)
 
     scope_ctx.stack.push(c)
 
 def opGt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c = (a > b)
+    c: bool = (a > b)
 
     scope_ctx.stack.push(c)
 
@@ -100,21 +104,18 @@ def opIsZero(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     scope_ctx.stack.push(c)
 
 def opAnd(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     c = (a & b) #bitwise and
 
     scope_ctx.stack.push(c)
 
 def opOr(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     c = (a | b) #bitwise or
 
     scope_ctx.stack.push(c)
 
 def opXor(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     c = (a ^ b)
 
@@ -136,7 +137,9 @@ def opByte(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
 
 def opShl(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     #TODO: Test me
+    #TODO: Fix me, logic is currently broken.. no regard to size.
     shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+    print("Shifting --> ", (value))
     result = numpy.left_shift(value, shift)
 
     scope_ctx.stack.push(result)
@@ -177,7 +180,7 @@ def opMstore(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     scope_ctx.mem.store(offset, value)
 
 def makePushOp(byte_count: int):
-
+    # TODO: test with 256 bit value 
     def pushN(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
         pc.increment()
         byte_val = scope_ctx.code[pc.get() : pc.get() + byte_count]
@@ -189,6 +192,13 @@ def makePushOp(byte_count: int):
 
     return pushN
 
+def makeDupOp(position: int):
+    # TODO: test 
+    def dupN(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+        scope_ctx.stack.duplicate(position)
+
+    return dupN
+
 @dataclass
 class EVMInstruction:
     gas_cost: int
@@ -197,6 +207,9 @@ class EVMInstruction:
     immediate_value: bool=False
     immediate_size: int=0
 
+##                                             ##
+#   mapping for easy reference during execution #
+##                                             ##
 ReferenceTable: dict = {
 
     Opcode.PUSH1 : EVMInstruction(
@@ -422,6 +435,112 @@ ReferenceTable: dict = {
         gas_cost=0,
         execute=makePushOp(32),
     ),
+
+    Opcode.DUP1 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(1),
+    ),
+
+    Opcode.DUP2 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(2),
+    ), 
+
+    Opcode.DUP3 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(3),
+    ), 
+
+    Opcode.DUP4 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(4),
+    ), 
+
+    Opcode.DUP5 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(5),
+    ), 
+
+    Opcode.DUP6 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(6),
+    ), 
+
+    Opcode.DUP8 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(8),
+    ), 
+
+    Opcode.DUP9 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(9),
+    ), 
+
+    Opcode.DUP10 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(10),
+    ), 
+
+    Opcode.DUP11 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(11),
+    ), 
+
+    Opcode.DUP12 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(12),
+    ),
+
+    Opcode.DUP13 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(13),
+    ), 
+
+    Opcode.DUP14 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(14),
+    ), 
+
+    Opcode.DUP15 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(15),
+    ), 
+
+    Opcode.DUP16 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(16),
+    ), 
+
 
     Opcode.ADD : EVMInstruction(
         gas_cost=0,
