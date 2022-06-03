@@ -1,1 +1,2 @@
 numpy==v1.19.5
+sha3==v0.2beta
