@@ -29,6 +29,9 @@ class Stack():
         
         self.stack.insert(0, item)
         self.count += 1
+    
+    def duplicate(self, position: int):
+        self.push(self.stack[position])
 
     def pop(self) -> bytes:
         if self.count == 0:
