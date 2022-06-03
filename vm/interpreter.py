@@ -30,8 +30,9 @@ class EVMInterpreter:
                 break
 
             print(f"PC = {pc.get()}, OP = {repr(op)}")
-            print(f"Stack -> {call_ctx.stack}")
+            
             ReferenceTable[op].execute(pc, self, call_ctx)
+            print(f"Stack -> {call_ctx.stack}")
 
             ## move to next byte in instruction encoding
             pc.increment(amount=1)
