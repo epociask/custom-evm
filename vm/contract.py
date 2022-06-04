@@ -12,7 +12,7 @@ class Contract:
         self._input = _input
 
     def get_op(self, pc: ProgramCounter) -> Opcode:
-        if pc.get() >= len(self.code): ## attempting execution of value of bounds
+        if pc.get() >= len(self.code): ## attempting execution OUT OF BOUNDS
             return Opcode.STOP
 
         return Opcode(self.code[pc.get()])

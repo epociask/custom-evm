@@ -5,12 +5,18 @@ import sha3
 from vm.opcode import Opcode
 from vm.pc import ProgramCounter
 from vm.scope_ctx import  ScopeContext
+from vm.constants import (
+    MAX_UINT_256,
+    MAX_256_HEX
+    )
 
 """
 Instruction logic taken from pseudocode presented in:
     * https://www.ethervm.io/ 
     * https://ethereum.org/en/developers/docs/evm/opcodes/
 """
+
+
 ##                                   ##
 #   Instruction defintion functions   #
 ##                                   ##
@@ -91,40 +97,38 @@ def opGt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
 def opEq(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    print("Comparing ", a, b)
-    c = (a == b)
+    c: bool = (a == b)
 
     scope_ctx.stack.push(c)
 
 def opIsZero(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     #TODO: Test me
     a = scope_ctx.stack.pop()
-    c = (a == 0)
+    c: bool = (a == 0)
 
     scope_ctx.stack.push(c)
 
 def opAnd(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c = (a & b) #bitwise and
+    c: bool = (a & b) #bitwise and
 
     scope_ctx.stack.push(c)
 
 def opOr(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c = (a | b) #bitwise or
+    c: bool = (a | b) #bitwise or
 
     scope_ctx.stack.push(c)
 
 def opXor(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c = (a ^ b)
+    c: bool = (a ^ b)
 
     scope_ctx.stack.push(c)
 
 def opNot(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
     a = scope_ctx.stack.pop()
-    c = not(a)
+    c: int = MAX_UINT_256 - a
     
     scope_ctx.stack.push(c)
 
@@ -136,11 +140,12 @@ def opByte(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     scope_ctx.stack.push(y)
 
 def opShl(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
-    #TODO: Fix me, logic is currently broken.. no regard to size.
     shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    print("Shifting --> ", (value))
-    result = numpy.left_shift(value, shift)
+    
+    if shift == MAX_256_HEX:
+        result = 0
+    else:
+        result = numpy.left_shift(value, shift) & MAX_UINT_256
 
     scope_ctx.stack.push(result)
 
@@ -193,9 +198,8 @@ def makePushOp(byte_count: int):
     return pushN
 
 def makeDupOp(position: int):
-    # TODO: test 
     def dupN(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-        scope_ctx.stack.duplicate(position)
+        scope_ctx.stack.duplicate(position-1)
 
     return dupN
 
@@ -476,6 +480,14 @@ ReferenceTable: dict = {
         immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(6),
+    ), 
+
+
+    Opcode.DUP7 : EVMInstruction(
+        immediate_value=True,
+        immediate_size=1,
+        gas_cost=0,
+        execute=makeDupOp(7),
     ), 
 
     Opcode.DUP8 : EVMInstruction(

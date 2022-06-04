@@ -8,7 +8,7 @@ class ProgramCounter:
         self.pc = pos
         
     def increment(self, amount: int=1):
-        self.pc+=amount
+        self.pc += amount
 
     def get(self):
         return self.pc
