@@ -20,6 +20,10 @@ class Stack():
     def __str__(self) -> str:
         return str(self.stack)
     
+    def reset(self):
+        self.stack = []
+        self.count = 0
+        
     def push(self, item: bytes):
         if sys.getsizeof(item) > 256:
             raise StackError("Item size exceeds word size limit (256 bits)")
@@ -37,6 +41,7 @@ class Stack():
         if self.count == 0:
             raise StackError("Trying to read from empty stack")
         
+        self.count -= 1
         return self.stack.pop(0)
 
     def peak(self) -> bytes:

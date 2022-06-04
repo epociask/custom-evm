@@ -19,7 +19,7 @@ class EVMInterpreter:
 
         pc = ProgramCounter(0)
 
-        ## Main execution loop
+        ## Main execution loop ## 
 
         while True:
             op: Opcode = contract.get_op(pc)

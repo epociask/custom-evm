@@ -3,6 +3,8 @@ from importlib.resources import open_text
 from vm.interpreter import EVMInterpreter
 from vm.contract import Contract
 
+import pytest
+
 """
 NOTE: All test cases were written out by hand (opcode, bytecode) before validated against VM interpreter
 """
@@ -115,7 +117,13 @@ def test_interpreter_arithmetic_2():
 
     assert interpreter.scope_ctx.stack.pop() == (1/2); "Ensuring resultant stack value is (1/2)"
 
-def test_bitwise():
+@pytest.mark.parametrize("opcode,expected", [
+    ("16", 0b00000000), # AND
+    ("17", 0b11110000), # OR
+    ("18", 0b11110000),  # XOR
+    ("19", 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5f),
+    ])
+def test_bitwise(opcode, expected):
     """
     ASSEMBLY VIEW:
     #0 PUSH1 0x50
@@ -123,25 +131,34 @@ def test_bitwise():
     #4 OPERATION 
     #5 STOP
     """
-    # AND, OR, XOR#
-    op_tests = [
-        {"opcode": "16", "expected": 0b00000000},
-        {"opcode": "17", "expected": 0b11110000},
-        {"opcode": "18", "expected": 0b11110000},
-        ]
+    result = bytearray.fromhex(f"6050 60A0 {opcode} 00")
 
-    for test in op_tests:
-        op = test["opcode"]
-        result = bytearray.fromhex(f"6050 60A0 {op} 00")
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
+
+    assert interpreter.scope_ctx.stack.pop() == expected; f"Ensuring resultant stack value is {expected}"
+
+@pytest.mark.parametrize("bytecode,expected", [
+    ## LSL ## 
+    ("60FF 6002 1B 00", 0x3FC), # PUSH1 0xFF #PUSH1 0x02 #SHL #STOP 
+    ("7F9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e3860021B00", 0x7442852ef3c928095dd022ab6ea645df3640ca115f2d53d008e131fc3f9178e0), #PUSH32 VAL #PUSH1 0x02 #SHL #STOP
+    ("7F 9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e38 7F FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF 1B 00", 0x0), #PUSH32 VAL #PUSH32 MAX #SHL STOP
+
+    ## SAR ##
+    # ("60FF 6002 1D", 0x3F), #PUSH1 0xFF #PUSH1 0x02 #SAR #STOP
+    # ("7F9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e3860021D00", 0xe7442852ef3c928095dd022ab6ea645df3640ca115f2d53d008e131fc3f9178e), #PUSH32 VAL #PUSH1 0x02 #SAR #STOP
+    # ("7F 9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e38 7F FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF 1D 00", 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), #PUSH32 VAL #PUSH32 MAX #SHL STOP
+   
+
+    ## SHR ##
     
-        contract = Contract(result, None)
-        interpreter = EVMInterpreter()
-        interpreter.run(contract)
+    ## BYTE ##
 
-        expected = test["expected"]
-        assert interpreter.scope_ctx.stack.pop() == expected; f"Ensuring resultant stack value is {expected}"
+    
 
-def test_shifts():
+ ])
+def test_shifts(bytecode, expected):
     """
     ASSEMBLY VIEW:
     #0 PUSH1 0x02
@@ -149,27 +166,57 @@ def test_shifts():
     #4 OPERATION 
     #5 STOP
     """
-    # SHL, SHR, SAR#
-    op_tests = [
-        # PUSH1 0x02 #PUSH1 0xFF #SHL #STOP 
-        {"bytecode": "60FF 6002 1B 00", "expected": 0b11111100},
+    result = bytearray.fromhex(bytecode)
 
-        # {"opcode": "1C", "expected": 0b11110000},
-        # {"opcode": "1D", "expected": 0b11110000},
-        ]
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
 
-    for test in op_tests:
-        instructions = test["bytecode"]
-        result = bytearray.fromhex(instructions)
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert actual == expected; f"Ensuring resultant stack value is {expected}"
+
+@pytest.mark.parametrize("bytecode,expected_stack", [
+    ("6001 80 00", [1,1]), # DUP1
+    ("6001 6002 81 00", [1,2,1]), # DUP2
+    ("6001 6002 6003 82 00", [1,3,2,1]), # DUP3
+    ("6001 6002 6003 6004 83 00", [1,4,3,2,1]), # DUP4
+    ("6001 6002 6003 6004 6005 84 00", [1,5,4,3,2,1]), # DUP5
+    ("6001 6002 6003 6004 6005 6006 85 00", [1,6,5,4,3,2,1]), # DUP6
+    ("6001 6002 6003 6004 6005 6006 6007 86 00", [1,7,6,5,4,3,2,1]), # DUP7
+    ("6001 6002 6003 6004 6005 6006 6007 6008 87 00", [1,8,7,6,5,4,3,2,1]), # DUP8
+    ("6001 6002 6003 6004 6005 6006 6007 6008 6009 88 00", [1,9,8,7,6,5,4,3,2,1]), # DUP9
+    ("6001 6002 6003 6004 6005 6006 6007 6008 6009 600A 89 00", [1,10,9,8,7,6,5,4,3,2,1]), # DUP10
+    ("6001 6002 6003 6004 6005 6006 6007 6008 6009 600A 600B 8A 00", [1,11,10,9,8,7,6,5,4,3,2,1]), # DUP11
+    ("6001 6002 6003 6004 6005 6006 6007 6008 6009 600A 600B 600C 8B 00", [1,12,11,10,9,8,7,6,5,4,3,2,1]), # DUP12
+    ("6001 6002 6003 6004 6005 6006 6007 6008 6009 600A 600B 600C 600D 8C 00", [1,13,12,11,10,9,8,7,6,5,4,3,2,1]), # DUP13
+    ("6001 6002 6003 6004 6005 6006 6007 6008 6009 600A 600B 600C 600D 600E 8D 00", [1,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), # DUP14
+    ("6001 6002 6003 6004 6005 6006 6007 6008 6009 600A 600B 600C 600D 600E 600F 8E 00", [1,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), # DUP15
+    ("6001 6002 6003 6004 6005 6006 6007 6008 6009 600A 600B 600C 600D 600E 600F 6010 8F 00", [1,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]), # DUP16
+    ])
+def test_dups(bytecode, expected_stack: list):
+    """
+    ASSEMBLY VIEW:
+    #0 PUSH1 0x02
+    #2 PUSH1 0xA0
+    #4 OPERATION 
+    #5 STOP
+    """
+    result = bytearray.fromhex(bytecode)
+
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
+
+    print("Actual stack", interpreter.scope_ctx.stack.stack)
+    print("Expected stack", expected_stack)
+    while interpreter.scope_ctx.stack.count != 0:
+        actual = interpreter.scope_ctx.stack.pop()
+        expected = expected_stack.pop(0)
+
+        assert expected == actual
     
-        contract = Contract(result, None)
-        interpreter = EVMInterpreter()
-        interpreter.run(contract)
-
-        expected = test["expected"]
-        assert interpreter.scope_ctx.stack.pop() == expected; f"Ensuring resultant stack value is {expected}"
-
-
+    interpreter.scope_ctx.stack.reset()
 
 def test_jump_0():
     """
