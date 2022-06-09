@@ -16,7 +16,7 @@ class Memory():
   def __init__(self):
     self.store = [None] * self.limit
 
-  def set(self, offset: int, value: bytes):
+  def set(self, offset: int, size, value: bytes):
     size = sys.getsizeof(value)
 
     if size > 0:

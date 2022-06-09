@@ -11,14 +11,15 @@ The EVM is an incredibly niche technology within blockchain. While very misunder
 - [ ] Gas computations and exceeded gas haulting
 - [ ] Standard precompiles
 - [ ] Storage representation
-- [ ] Stack representation
+- [X] Stack representation
 - [ ] Memory representation
-- [ ] Execution state opcodes (`DIFFICULTY`, `BLOCKHASH`)
+- [ ] Block state opcodes (`DIFFICULTY`, `BLOCKHASH`)
 - [ ] Arithmetic operations
-- [ ] Jumping and branching
+- [X] Jumping and branching
 - [ ] Jump analysis logic
-- [ ] All `DUP` and `PUSH` opcodes
-
+- [X] All `DUP` and `PUSH` opcodes
+- [ ] Full test coverage
+ 
 ## Testing 
 There a two types of tests for this project:
 
