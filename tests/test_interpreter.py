@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-from importlib.resources import open_text
 from vm.interpreter import EVMInterpreter
 from vm.contract import Contract
 
@@ -169,7 +167,9 @@ def test_bitwise(opcode, expected):
    
 
     ## SHR ##
-    
+    ("60FF 6002 1C", 0x3F),
+    ("7F9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e3860021C00", 0x27442852ef3c928095dd022ab6ea645df3640ca115f2d53d008e131fc3f9178e)
+
     ## BYTE ##
 
     
@@ -342,16 +342,19 @@ def test_jump_conditional_1():
 
     # SGT (0x13) #
 
-    # EQ (0x14) #
+    # # EQ (0x14) #
     ("6012 6012 14 00", 1),
     ("6012 6011 14 00", 0),
 
-    # LT (0x10) #
-    ("6002 6001 11 00", 1),
-    ("6001 6002 11 00", 0),
+    # # LT (0x10) #
+    ("6002 6001 11 00", 0),
+    ("6001 6002 11 00", 1),
 
     # SLT (0x12) #
 
+    # ISZERO (0x15) #
+    ("6000 15 00", 1),
+    ("6001 15 00", 0)
     ])
 def test_conditionals(bytecode, expected):
     result = bytearray.fromhex(bytecode)

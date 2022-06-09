@@ -4,7 +4,7 @@ from vm.memory import Memory
 from vm.stack import Stack
 
 @dataclass
-class ScopeContext:
+class MachineContext:
     code: list
     mem: Memory
     stack: Stack 

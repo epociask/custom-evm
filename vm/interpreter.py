@@ -4,7 +4,7 @@ from vm.stack import Stack
 from vm.pc import ProgramCounter
 from vm.opcode import Opcode
 from vm.instructions import ReferenceTable
-from vm.scope_ctx import ScopeContext
+from vm.machine_ctx import MachineContext
 
 
 class EVMInterpreter:
@@ -14,8 +14,8 @@ class EVMInterpreter:
         
         stack, mem = Stack(), Memory()
 
-        call_ctx = ScopeContext(contract.code, mem, stack)
-        self.scope_ctx = call_ctx
+        ctx = MachineContext(contract.code, mem, stack)
+        self.scope_ctx = ctx
 
         pc = ProgramCounter(0)
 
@@ -29,8 +29,8 @@ class EVMInterpreter:
 
             print(f"PC = {pc.get()}, OP = {repr(op)}")
             
-            ReferenceTable[op].execute(pc, self, call_ctx)
-            print(f"Stack -> {call_ctx.stack}")
+            ReferenceTable[op].execute(pc, self, ctx)
+            print(f"Stack -> {ctx.stack}")
 
             ## move to next byte in instruction encoding
             pc.increment(amount=1)
