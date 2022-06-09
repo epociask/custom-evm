@@ -4,7 +4,7 @@ import sha3
 
 from vm.opcode import Opcode
 from vm.pc import ProgramCounter
-from vm.scope_ctx import  ScopeContext
+from vm.machine_ctx import  MachineContext
 from vm.constants import (
     MAX_UINT_256,
     MAX_256_HEX
@@ -16,202 +16,208 @@ Instruction logic taken from pseudocode presented in:
     * https://ethereum.org/en/developers/docs/evm/opcodes/
 """
 
+bool_to_bin = lambda b: 0 if b is False else 1
+
 
 ##                                   ##
 #   Instruction defintion functions   #
 ##                                   ##
-def opAdd(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opAdd(pc: ProgramCounter, interp, ctx: MachineContext):
+    x, y = ctx.stack.pop(), ctx.stack.pop()
     z: int = x + y
 
-    scope_ctx.stack.push(z)
+    ctx.stack.push(z)
 
-def opSub(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opSub(pc: ProgramCounter, interp, ctx: MachineContext):
+    x, y = ctx.stack.pop(), ctx.stack.pop()
     z: int = x - y
 
-    scope_ctx.stack.push(z)
+    ctx.stack.push(z)
 
-def opMul(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opMul(pc: ProgramCounter, interp, ctx: MachineContext):
+    x, y = ctx.stack.pop(), ctx.stack.pop()
     z: int = x * y
 
-    scope_ctx.stack.push(z)
+    ctx.stack.push(z)
 
-def opDiv(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opDiv(pc: ProgramCounter, interp, ctx: MachineContext):
+    # TODO: test more thoroughly 
+    x, y = ctx.stack.pop(), ctx.stack.pop()
     z = x / y
 
-    scope_ctx.stack.push(z)
+    ctx.stack.push(z)
 
-def opMod(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opMod(pc: ProgramCounter, interp, ctx: MachineContext):
+    x, y = ctx.stack.pop(), ctx.stack.pop()
     z: int = x % y
 
-    scope_ctx.stack.push(z)
+    ctx.stack.push(z)
 
-def opAddMod(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    x, y, n = scope_ctx.stack.pop(), scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opAddMod(pc: ProgramCounter, interp, ctx: MachineContext):
+    x, y, n = ctx.stack.pop(), ctx.stack.pop(), ctx.stack.pop()
     z: int = (x+y) % n
-    scope_ctx.stack.push(z)
+    ctx.stack.push(z)
 
-def opMulMod(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    x, y, n = scope_ctx.stack.pop(), scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opMulMod(pc: ProgramCounter, interp, ctx: MachineContext):
+    x, y, n = ctx.stack.pop(), ctx.stack.pop(), ctx.stack.pop()
     z: int = (x*y) % n
-    scope_ctx.stack.push(z)
+    ctx.stack.push(z)
 
-def opExp(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    x, y = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opExp(pc: ProgramCounter, interp, ctx: MachineContext):
+    x, y = ctx.stack.pop(), ctx.stack.pop()
     z: int = x ** y
 
-    scope_ctx.stack.push(z)
+    ctx.stack.push(z)
 
-def opJump(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    dest = scope_ctx.stack.pop()
+def opJump(pc: ProgramCounter, interp, ctx: MachineContext):
+    dest = ctx.stack.pop()
     pc.set(dest)
 
-def opJumpDest(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+def opJumpDest(pc: ProgramCounter, interp, ctx: MachineContext):
     pass
 
-def opJumpI(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    dest, cond = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opJumpI(pc: ProgramCounter, interp, ctx: MachineContext):
+    dest, cond = ctx.stack.pop(), ctx.stack.pop()
 
     if cond:
         pc.set(dest)
 
 
-def opLt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
-    a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c: bool = (a < b)
+def opLt(pc: ProgramCounter, interp, ctx: MachineContext):
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    c: bin = bool_to_bin((a < b))
 
-    scope_ctx.stack.push(c)
+    ctx.stack.push(c)
 
-def opSgt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+def opSgt(pc: ProgramCounter, interp, ctx: MachineContext):
+    # TODO: implement 
     pass
 
-def opSlt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+def opSlt(pc: ProgramCounter, interp, ctx: MachineContext):
+    # TODO: implement 
     pass
 
-def opGt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
-    a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c: bool = (a > b)
+def opGt(pc: ProgramCounter, interp, ctx: MachineContext):
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    c: int = bool_to_bin((a > b))
 
-    scope_ctx.stack.push(c)
+    ctx.stack.push(c)
 
-def opEq(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
-    a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c: bool = (a == b)
+def opEq(pc: ProgramCounter, interp, ctx: MachineContext):
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    c: int = bool_to_bin((a == b))
 
-    scope_ctx.stack.push(c)
+    ctx.stack.push(c)
 
-def opIsZero(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
-    a = scope_ctx.stack.pop()
-    c: bool = (a == 0)
+def opIsZero(pc: ProgramCounter, interp, ctx: MachineContext):
+    a = ctx.stack.pop()
+    c: int = bool_to_bin((a == 0))
 
-    scope_ctx.stack.push(c)
+    ctx.stack.push(c)
 
-def opAnd(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c: bool = (a & b) #bitwise and
+def opAnd(pc: ProgramCounter, interp, ctx: MachineContext):
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    c: bin = (a & b) #bitwise and
 
-    scope_ctx.stack.push(c)
+    ctx.stack.push(c)
 
-def opOr(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c: bool = (a | b) #bitwise or
+def opOr(pc: ProgramCounter, interp, ctx: MachineContext):
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    c: bin = (a | b) #bitwise or
 
-    scope_ctx.stack.push(c)
+    ctx.stack.push(c)
 
-def opXor(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    c: bool = (a ^ b)
+def opXor(pc: ProgramCounter, interp, ctx: MachineContext):
+    a, b = ctx.stack.pop(), ctx.stack.pop()
+    c: bin = (a ^ b)
 
-    scope_ctx.stack.push(c)
+    ctx.stack.push(c)
 
-def opNot(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    a = scope_ctx.stack.pop()
+def opNot(pc: ProgramCounter, interp, ctx: MachineContext):
+    a = ctx.stack.pop()
     c: int = MAX_UINT_256 - a
     
-    scope_ctx.stack.push(c)
+    ctx.stack.push(c)
 
-def opByte(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+def opByte(pc: ProgramCounter, interp, ctx: MachineContext):
     #TODO: Test me
-    i, x = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+    i, x = ctx.stack.pop(), ctx.stack.pop()
     y = (x >> (248 - i * 8)) & 0xFF
 
-    scope_ctx.stack.push(y)
+    ctx.stack.push(y)
 
-def opShl(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opShl(pc: ProgramCounter, interp, ctx: MachineContext):
+    shift, value = ctx.stack.pop(), ctx.stack.pop()
     
     if shift == MAX_256_HEX:
         result = 0
     else:
         result = numpy.left_shift(value, shift) & MAX_UINT_256
 
-    scope_ctx.stack.push(result)
+    ctx.stack.push(result)
 
-def opShr(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    #TODO: Test me
-    shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    result = numpy.right_shift(value, shift)
+def opShr(pc: ProgramCounter, interp, ctx: MachineContext):
+    shift, value = ctx.stack.pop(), ctx.stack.pop()
+
+    if shift == MAX_256_HEX:
+        result = 0
     
-    scope_ctx.stack.push(result)
+    else:
+        result = numpy.right_shift(value, shift) & MAX_UINT_256
+    
+    ctx.stack.push(result)
 
-def opSar(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+def opSar(pc: ProgramCounter, interp, ctx: MachineContext):
     #TODO: Test me
     #1 Arithmetic (signed) right shift operation.
     #   µ0s[0] ≡ bµs[1] ÷ 2^µs[0]c
     #   Where µs[0] and µs [1] are treated as two’s complement signed 256-bit integers,
     #   while µs [0] is treated as unsigned.
     
-    shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+    shift, value = ctx.stack.pop(), ctx.stack.pop()
     # Get signed representation of value
     result = (value & 0xffffffff) / (2**shift) # bitmask to ensure consistent 2^256 value boundaries
     
-    scope_ctx.stack.push(result)
+    ctx.stack.push(result)
 
-def opSha3(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+def opSha3(pc: ProgramCounter, interp, ctx: MachineContext):
     #TODO: Test me
-    offset = scope_ctx.stack.pop()
-    value = scope_ctx.mem.get(offset)
+    offset = ctx.stack.pop()
+    value = ctx.mem.get(offset)
 
     hasher = sha3.keccak_256()
     hasher.update(value)
     
-    scope_ctx.push(hasher.hexidigest())
+    ctx.push(hasher.hexidigest())
 
-def opMload(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    offset = scope_ctx.stack.pop()
-    val = scope_ctx.mem.get(offset)
+def opMload(pc: ProgramCounter, interp, ctx: MachineContext):
+    #TODO: Test me
+    offset = ctx.stack.pop()
+    val = ctx.mem.get(offset)
 
-    scope_ctx.stack.push(val)
+    ctx.stack.push(val)
 
-def opMstore(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-    value, offset = scope_ctx.stack.pop(), scope_ctx.stack.pop()
+def opMstore(pc: ProgramCounter, interp, ctx: MachineContext):
+    #TODO: Test me
+    value, offset = ctx.stack.pop(), ctx.stack.pop()
 
-    scope_ctx.mem.store(offset, value)
+    ctx.mem.store(offset, value)
 
-def makePushOp(byte_count: int):
-    # TODO: test with 256 bit value 
-    def pushN(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+def makePushOp(offset_bytes: int):
+    def pushN(pc: ProgramCounter, interp, ctx: MachineContext):
         pc.increment()
-        byte_val = scope_ctx.code[pc.get() : pc.get() + byte_count]
-        int_val = int.from_bytes(byte_val, "big") #BIG Endian ordering man
+        byte_val = ctx.code[pc.get() : pc.get() + offset_bytes]
+        int_val = int.from_bytes(byte_val, "big") #Big Endian ordering 
         
-        pc.increment(byte_count-1)
-        scope_ctx.stack.push(int_val)
+        pc.increment(offset_bytes-1)
+        ctx.stack.push(int_val)
 
 
     return pushN
 
 def makeDupOp(position: int):
-    def dupN(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
-        scope_ctx.stack.duplicate(position-1)
+    def dupN(pc: ProgramCounter, interp, ctx: MachineContext):
+        ctx.stack.duplicate(position-1)
 
     return dupN
 
