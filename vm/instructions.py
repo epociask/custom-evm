@@ -87,6 +87,12 @@ def opLt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
 
     scope_ctx.stack.push(c)
 
+def opSgt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    pass
+
+def opSlt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
+    pass
+
 def opGt(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     #TODO: Test me
     a, b = scope_ctx.stack.pop(), scope_ctx.stack.pop()
@@ -153,14 +159,20 @@ def opShr(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     #TODO: Test me
     shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
     result = numpy.right_shift(value, shift)
-
+    
     scope_ctx.stack.push(result)
 
 def opSar(pc: ProgramCounter, interp, scope_ctx: ScopeContext):
     #TODO: Test me
+    #1 Arithmetic (signed) right shift operation.
+    #   µ0s[0] ≡ bµs[1] ÷ 2^µs[0]c
+    #   Where µs[0] and µs [1] are treated as two’s complement signed 256-bit integers,
+    #   while µs [0] is treated as unsigned.
+    
     shift, value = scope_ctx.stack.pop(), scope_ctx.stack.pop()
-    result = value >> shift
-
+    # Get signed representation of value
+    result = (value & 0xffffffff) / (2**shift) # bitmask to ensure consistent 2^256 value boundaries
+    
     scope_ctx.stack.push(result)
 
 def opSha3(pc: ProgramCounter, interp, scope_ctx: ScopeContext):

@@ -16,7 +16,10 @@ def test_interpreter_push_1():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 0x1111; "Ensuring resultant stack value is 2 bytes pushed 0x1111"
+    expected = 0x1111
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert expected == actual; "Ensuring resultant stack value is 2 bytes pushed 0x1111"
 
 def test_interpreter_push_2():
     """
@@ -31,8 +34,10 @@ def test_interpreter_push_2():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 0x010101011001100110010110; "Ensuring 12 byte value is pushed on stack properly"
-    assert interpreter.scope_ctx.stack.pop() == 0x11111111; "Ensuring 4 byte value is pushed on stack properly"
+    expected_1, expected_2 = 0x010101011001100110010110, 0x11111111
+    actual_1, actual_2 = interpreter.scope_ctx.stack.pop(), interpreter.scope_ctx.stack.pop()
+    assert expected_1 == actual_1; "Ensuring 12 byte value is pushed on stack properly"
+    assert expected_2 == actual_2; "Ensuring 4 byte value is pushed on stack properly"
 
 def test_interpreter_add():
     result = bytearray.fromhex("6080 6040 01")
@@ -41,7 +46,10 @@ def test_interpreter_add():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 192; "Ensuring resultant stack value is sum of 0x40 and 0x80"
+    expected = 192
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert expected == actual; "Ensuring resultant stack value is sum of 0x40 and 0x80"
 
 def test_interpreter_arithmetic():
     result = bytearray.fromhex("6001 6001 01 6002 03")
@@ -50,7 +58,10 @@ def test_interpreter_arithmetic():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 0; "Ensuring resultant stack value is 0x00"
+    expected = 0x0
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert expected == actual; "Ensuring resultant stack value is 0x00"
 
 def test_interpreter_arithmetic_1():
     """
@@ -68,7 +79,10 @@ def test_interpreter_arithmetic_1():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 4; "Ensuring resultant stack value is 0x04"
+    expected = 0x04
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert expected == actual; "Ensuring resultant stack value is 0x04"
 
 def test_interpreter_arithmetic_2():
     """
@@ -92,7 +106,10 @@ def test_interpreter_arithmetic_2():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == (1/2); "Ensuring resultant stack value is (1/2)"
+    expected = (1/2)
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert expected == actual; "Ensuring resultant stack value is (1/2)"
 def test_interpreter_arithmetic_2():
     """
     ASSEMBLY VIEW:
@@ -121,7 +138,7 @@ def test_interpreter_arithmetic_2():
     ("16", 0b00000000), # AND
     ("17", 0b11110000), # OR
     ("18", 0b11110000),  # XOR
-    ("19", 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5f),
+    ("19", 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5f), # NOT
     ])
 def test_bitwise(opcode, expected):
     """
@@ -146,8 +163,8 @@ def test_bitwise(opcode, expected):
     ("7F 9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e38 7F FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF 1B 00", 0x0), #PUSH32 VAL #PUSH32 MAX #SHL STOP
 
     ## SAR ##
-    # ("60FF 6002 1D", 0x3F), #PUSH1 0xFF #PUSH1 0x02 #SAR #STOP
-    # ("7F9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e3860021D00", 0xe7442852ef3c928095dd022ab6ea645df3640ca115f2d53d008e131fc3f9178e), #PUSH32 VAL #PUSH1 0x02 #SAR #STOP
+    ("60FF 6002 1D", 0x3F), #PUSH1 0xFF #PUSH1 0x02 #SAR #STOP
+    ("7F9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e3860021D00", 0xe7442852ef3c928095dd022ab6ea645df3640ca115f2d53d008e131fc3f9178e), #PUSH32 VAL #PUSH1 0x02 #SAR #STOP
     # ("7F 9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e38 7F FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF 1D 00", 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), #PUSH32 VAL #PUSH32 MAX #SHL STOP
    
 
@@ -211,8 +228,8 @@ def test_dups(bytecode, expected_stack: list):
     print("Actual stack", interpreter.scope_ctx.stack.stack)
     print("Expected stack", expected_stack)
     while interpreter.scope_ctx.stack.count != 0:
-        actual = interpreter.scope_ctx.stack.pop()
         expected = expected_stack.pop(0)
+        actual = interpreter.scope_ctx.stack.pop()
 
         assert expected == actual
     
@@ -236,7 +253,10 @@ def test_jump_0():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 12; "Ensuring resultant stack value is product of (4*3)"
+    expected = 0x0C
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert expected == actual
 
 def test_jump_1():
     """
@@ -260,7 +280,10 @@ def test_jump_1():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 6; "Ensuring resultant stack value is 4+2"
+    expected = 0x06
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert expected == actual
 
 def test_jump_conditional_0():
     """
@@ -282,7 +305,10 @@ def test_jump_conditional_0():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 0x08; "Ensuring resultant stack value is 0x08"
+    expected = 0x08
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert expected == actual
 
 def test_jump_conditional_1():
     """
@@ -304,4 +330,35 @@ def test_jump_conditional_1():
     interpreter = EVMInterpreter()
     interpreter.run(contract)
 
-    assert interpreter.scope_ctx.stack.pop() == 0x09; "Ensuring resultant stack value is 0x08"
+    expected = 0x09
+    actual = interpreter.scope_ctx.stack.pop()
+
+    assert  expected == actual
+
+@pytest.mark.parametrize("bytecode,expected", [
+    # GT (0x11) #
+    ("6002 6001 11 00", 0),
+    ("6001 6002 11 00", 1),
+
+    # SGT (0x13) #
+
+    # EQ (0x14) #
+    ("6012 6012 14 00", 1),
+    ("6012 6011 14 00", 0),
+
+    # LT (0x10) #
+    ("6002 6001 11 00", 1),
+    ("6001 6002 11 00", 0),
+
+    # SLT (0x12) #
+
+    ])
+def test_conditionals(bytecode, expected):
+    result = bytearray.fromhex(bytecode)
+
+    contract = Contract(result, None)
+    interpreter = EVMInterpreter()
+    interpreter.run(contract)
+
+    actual = interpreter.scope_ctx.stack.pop()
+    assert  expected == actual
