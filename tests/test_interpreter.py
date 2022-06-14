@@ -1,5 +1,6 @@
 from vm.interpreter import EVMInterpreter
 from vm.contract import Contract
+from vm.constants import ReturnCode as rc
 
 import pytest
 
@@ -49,17 +50,6 @@ def test_interpreter_add():
 
     assert expected == actual; "Ensuring resultant stack value is sum of 0x40 and 0x80"
 
-def test_interpreter_arithmetic():
-    result = bytearray.fromhex("6001 6001 01 6002 03")
-    
-    contract = Contract(result, None)
-    interpreter = EVMInterpreter()
-    interpreter.run(contract)
-
-    expected = 0x0
-    actual = interpreter.scope_ctx.stack.pop()
-
-    assert expected == actual; "Ensuring resultant stack value is 0x00"
 
 def test_interpreter_arithmetic_1():
     """
@@ -168,10 +158,15 @@ def test_bitwise(opcode, expected):
 
     ## SHR ##
     ("60FF 6002 1C", 0x3F),
-    ("7F9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e3860021C00", 0x27442852ef3c928095dd022ab6ea645df3640ca115f2d53d008e131fc3f9178e)
+    ("7F9d10a14bbcf24a02577408aadba99177cd90328457cb54f402384c7f0fe45e3860021C00", 0x27442852ef3c928095dd022ab6ea645df3640ca115f2d53d008e131fc3f9178e),
 
     ## BYTE ##
 
+    ## ADD ##
+    ("7Fbc1c7dbabce9e9a36f2acceef73fc799d544e557e0c8073d80f3b9ca484dddf67Fbc1c7dbabce9e9a36f2acceef73fc799d544e557e0c8073d80f3b9ca484dddf60100", 0x7838fb7579d3d346de5599ddee7f8f33aa89caafc1900e7b01e77394909bbbec),
+
+    ## Chained Arithmetic ##
+    ("6001 6001 01 6002 03 00", 0x0) # (1+1) - 2 ... #PUSH1 0x01 #PUSH1 0x01 #ADD #PUSH1 0x02 #SUB #STOP
     
 
  ])
@@ -365,3 +360,24 @@ def test_conditionals(bytecode, expected):
 
     actual = interpreter.scope_ctx.stack.pop()
     assert  expected == actual
+
+@pytest.mark.parametrize("bytecode,expected_code,callvalue,calldata", [
+    # taken from https://github.com/fvictorio/evm-puzzles
+    ("3456FDFDFDFDFDFD5B00", rc.STOPPED, 0x08, 0x0), 
+    ("34380356FDFD5B00FDFD", rc.STOPPED, 0x04, 0x0),
+    ("3656FDFD5B00", rc.STOPPED, 0x0, 0x11111111),
+    ("34381856FDFDFDFDFDFD5B00", rc.STOPPED, 0x06, 0x0),
+    ("34800261010014600C57FDFD5B00FDFD", rc.STOPPED, 0x10, 0x0),
+    ("60003556FDFDFDFDFDFD5B00", rc.STOPPED, 0x0, 0x000000000000000000000000000000000000000000000000000000000000000A),
+    ])
+def test_evm_puzzles(bytecode, expected_code, callvalue, calldata):
+    result = bytearray.fromhex(bytecode)
+
+    contract = Contract(result, bytearray(calldata), callvalue)
+    interpreter = EVMInterpreter()
+
+    ce = interpreter.run(contract)
+    actual_code = ce.code
+
+    assert expected_code == actual_code
+

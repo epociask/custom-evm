@@ -5,16 +5,20 @@ from vm.pc import ProgramCounter
 from vm.opcode import Opcode
 from vm.instructions import ReferenceTable
 from vm.machine_ctx import MachineContext
+from vm.constants import (
+    CompletedExecution,
+    ReturnCode
+)
 
 
 class EVMInterpreter:
     scope_ctx = None
 
-    def run(self, contract: Contract):
+    def run(self, contract: Contract) -> CompletedExecution:
         
         stack, mem = Stack(), Memory()
 
-        ctx = MachineContext(contract.code, mem, stack)
+        ctx = MachineContext(contract, mem, stack)
         self.scope_ctx = ctx
 
         pc = ProgramCounter(0)
@@ -23,12 +27,14 @@ class EVMInterpreter:
 
         while True:
             op: Opcode = contract.get_op(pc)
-
-            if op == Opcode.STOP:
-                break
-
             print(f"PC = {pc.get()}, OP = {repr(op)}")
             
+            if op == Opcode.STOP:
+                return CompletedExecution(code=ReturnCode.STOPPED, data=None)
+
+            if op == Opcode.REVERT:
+                return CompletedExecution(code=ReturnCode.REVERTED, data=None)
+
             ReferenceTable[op].execute(pc, self, ctx)
             print(f"Stack -> {ctx.stack}")
 
