@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 import numpy
 import sha3
+import sys
 
 from vm.opcode import Opcode
 from vm.pc import ProgramCounter
 from vm.machine_ctx import  MachineContext
 from vm.constants import (
     MAX_UINT_256,
-    MAX_256_HEX
+    MAX_256_HEX,
+    BIG_ENDIAN,
     )
 
 """
@@ -24,24 +26,25 @@ bool_to_bin = lambda b: 0 if b is False else 1
 ##                                   ##
 def opAdd(pc: ProgramCounter, interp, ctx: MachineContext):
     x, y = ctx.stack.pop(), ctx.stack.pop()
-    z: int = x + y
+    z: int = (x + y) & MAX_UINT_256
 
     ctx.stack.push(z)
 
 def opSub(pc: ProgramCounter, interp, ctx: MachineContext):
     x, y = ctx.stack.pop(), ctx.stack.pop()
-    z: int = x - y
+    z: int = (x - y) & MAX_UINT_256
 
     ctx.stack.push(z)
 
 def opMul(pc: ProgramCounter, interp, ctx: MachineContext):
     x, y = ctx.stack.pop(), ctx.stack.pop()
-    z: int = x * y
+    z: int = (x * y) & MAX_UINT_256
 
     ctx.stack.push(z)
 
 def opDiv(pc: ProgramCounter, interp, ctx: MachineContext):
     # TODO: test more thoroughly 
+    # TODO: Edge case /// divide by zero?
     x, y = ctx.stack.pop(), ctx.stack.pop()
     z = x / y
 
@@ -71,6 +74,7 @@ def opExp(pc: ProgramCounter, interp, ctx: MachineContext):
 
 def opJump(pc: ProgramCounter, interp, ctx: MachineContext):
     dest = ctx.stack.pop()
+    print("Jumping to ", dest)
     pc.set(dest)
 
 def opJumpDest(pc: ProgramCounter, interp, ctx: MachineContext):
@@ -168,16 +172,10 @@ def opShr(pc: ProgramCounter, interp, ctx: MachineContext):
     ctx.stack.push(result)
 
 def opSar(pc: ProgramCounter, interp, ctx: MachineContext):
-    #TODO: Test me
-    #1 Arithmetic (signed) right shift operation.
-    #   µ0s[0] ≡ bµs[1] ÷ 2^µs[0]c
-    #   Where µs[0] and µs [1] are treated as two’s complement signed 256-bit integers,
-    #   while µs [0] is treated as unsigned.
-    
     shift, value = ctx.stack.pop(), ctx.stack.pop()
-    # Get signed representation of value
-    result = (value & 0xffffffff) / (2**shift) # bitmask to ensure consistent 2^256 value boundaries
     
+    shifted_value = value >> shift
+    result = shifted_value & MAX_256_HEX
     ctx.stack.push(result)
 
 def opSha3(pc: ProgramCounter, interp, ctx: MachineContext):
@@ -203,11 +201,32 @@ def opMstore(pc: ProgramCounter, interp, ctx: MachineContext):
 
     ctx.mem.store(offset, value)
 
+def opCallValue(pc: ProgramCounter, interp, ctx: MachineContext):
+    call_value: int = ctx.contract.value & MAX_UINT_256
+
+    ctx.stack.push(call_value)
+
+def opCodeSize(pc: ProgramCounter, interp, ctx: MachineContext):
+    size: int = len(ctx.contract.code)
+
+    ctx.stack.push(size)
+
+def opCallDataSize(pc: ProgramCounter, interp, ctx: MachineContext):
+    size: int = sys.getsizeof(ctx.contract.data)
+
+    ctx.stack.push(size)
+
+def opCallDataLoad(pc: ProgramCounter, interp, ctx: MachineContext):
+    first_32_bytes = ctx.contract.code[0 : 32]
+    value = int.from_bytes(first_32_bytes, byteorder=BIG_ENDIAN)
+
+    ctx.stack.push(value)
+
 def makePushOp(offset_bytes: int):
     def pushN(pc: ProgramCounter, interp, ctx: MachineContext):
         pc.increment()
-        byte_val = ctx.code[pc.get() : pc.get() + offset_bytes]
-        int_val = int.from_bytes(byte_val, "big") #Big Endian ordering 
+        byte_val = ctx.contract.code[pc.get() : pc.get() + offset_bytes]
+        int_val = int.from_bytes(byte_val, BIG_ENDIAN) #Big Endian ordering 
         
         pc.increment(offset_bytes-1)
         ctx.stack.push(int_val)
@@ -696,6 +715,26 @@ ReferenceTable: dict = {
     Opcode.SAR : EVMInstruction(
         gas_cost=0,
         execute=opSar,
+    ),
+
+    Opcode.CALLVALUE : EVMInstruction(
+        gas_cost=0,
+        execute=opCallValue,
+    ),
+
+    Opcode.CODESIZE : EVMInstruction(
+        gas_cost=0,
+        execute=opCodeSize,
+    ),
+
+    Opcode.CALLDATASIZE : EVMInstruction(
+        gas_cost=0,
+        execute=opCallDataSize,
+    ),
+
+    Opcode.CALLDATALOAD : EVMInstruction(
+        gas_cost=0,
+        execute=opCallDataLoad,
     )
 }
 

@@ -2,14 +2,15 @@ from vm.pc import ProgramCounter
 from vm.opcode import Opcode
 
 class Contract:        
-    #TODO add jumping logic
-    ## IE jump destination mapping && analysis logic
-    code: list = []
-    _input: list = []
+    ## TODO jump destination mapping && analysis logic
+    code: bytearray = []
+    data: bytearray = []
+    value: int = 0
 
-    def __init__(self, code, _input):
+    def __init__(self, code, data, value=0):
         self.code = code
-        self._input = _input
+        self.data = data
+        self.value = value
 
     def get_op(self, pc: ProgramCounter) -> Opcode:
         if pc.get() >= len(self.code): ## attempting execution OUT OF BOUNDS
