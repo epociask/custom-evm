@@ -9,12 +9,12 @@ Yellowpaper requirements:
 class StackError(Exception):
     pass
 
-
 class Stack():
     stack: list = []
     count: int = 0
 
     def __init__(self, size: int=1024):
+        self.stack = []
         self.size = size
 
     def __str__(self) -> str:
@@ -44,8 +44,11 @@ class Stack():
         self.count -= 1
         return self.stack.pop(0)
 
-    def peak(self) -> bytes:
-        if self.count == 0:
-            raise StackError("Trying to read from empty stack")
-        
-        return self.stack[0]
+    def swap(self, x_pos: int, y_pos: int):
+        if (y_pos) > self.count or (x_pos) > self.count:
+            raise StackError("Trying to swap at undefined stack index")
+
+        print("Preswap", self.stack)
+        temp = self.stack[y_pos]
+        self.stack[y_pos] = self.stack[x_pos]
+        self.stack[x_pos] = temp

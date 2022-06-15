@@ -240,6 +240,12 @@ def makeDupOp(position: int):
 
     return dupN
 
+def makeSwapOp(position: int):
+    def swapN(pc: ProgramCounter, interp, ctx: MachineContext):
+        ctx.stack.swap(0, position)
+
+    return swapN
+
 @dataclass
 class EVMInstruction:
     gas_cost: int
@@ -254,343 +260,330 @@ class EVMInstruction:
 ReferenceTable: dict = {
 
     Opcode.PUSH1 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(1),
     ),
 
     Opcode.PUSH2 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(2),
     ), 
 
     Opcode.PUSH3 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(3),
     ), 
 
     Opcode.PUSH4 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(4),
     ), 
 
     Opcode.PUSH5 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(5),
     ), 
 
     Opcode.PUSH6 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(6),
     ), 
 
+    Opcode.PUSH7 : EVMInstruction(
+        gas_cost=0,
+        execute=makePushOp(7),
+    ), 
+
     Opcode.PUSH8 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(8),
     ), 
 
     Opcode.PUSH9 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(9),
     ), 
 
     Opcode.PUSH10 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(10),
     ), 
 
     Opcode.PUSH11 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(11),
     ), 
 
     Opcode.PUSH12 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(12),
     ),
 
     Opcode.PUSH13 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(13),
     ), 
 
     Opcode.PUSH14 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(14),
     ), 
 
     Opcode.PUSH15 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(15),
     ), 
 
     Opcode.PUSH16 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(16),
     ), 
 
     Opcode.PUSH17 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(17),
     ), 
 
     Opcode.PUSH18 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(18),
     ), 
 
     Opcode.PUSH19 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(19),
     ), 
 
     Opcode.PUSH20 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(20),
     ), 
 
     Opcode.PUSH21 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(21),
     ), 
 
     Opcode.PUSH22 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(22),
     ), 
 
     Opcode.PUSH23 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(23),
     ), 
 
     Opcode.PUSH24 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(24),
     ), 
 
     Opcode.PUSH25 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(25),
     ), 
 
     Opcode.PUSH25 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(25),
     ), 
     
     Opcode.PUSH26 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(26),
     ),
 
     Opcode.PUSH27 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(27),
     ), 
 
     Opcode.PUSH28 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(28),
     ), 
     
     Opcode.PUSH29 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(29),
     ),  
 
     Opcode.PUSH30 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(30),
     ), 
     
     Opcode.PUSH31 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(31),
     ),
 
     Opcode.PUSH32 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makePushOp(32),
     ),
 
     Opcode.DUP1 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(1),
     ),
 
     Opcode.DUP2 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(2),
     ), 
 
     Opcode.DUP3 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(3),
     ), 
 
     Opcode.DUP4 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(4),
     ), 
 
     Opcode.DUP5 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(5),
     ), 
 
     Opcode.DUP6 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(6),
     ), 
 
 
     Opcode.DUP7 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(7),
     ), 
 
     Opcode.DUP8 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(8),
     ), 
 
     Opcode.DUP9 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(9),
     ), 
 
     Opcode.DUP10 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(10),
     ), 
 
     Opcode.DUP11 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(11),
     ), 
 
     Opcode.DUP12 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(12),
     ),
 
     Opcode.DUP13 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(13),
     ), 
 
     Opcode.DUP14 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(14),
     ), 
 
     Opcode.DUP15 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(15),
     ), 
 
     Opcode.DUP16 : EVMInstruction(
-        immediate_value=True,
-        immediate_size=1,
         gas_cost=0,
         execute=makeDupOp(16),
     ), 
 
+    Opcode.SWAP1 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(1),
+    ),
 
+    Opcode.SWAP2 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(2),
+    ), 
+
+    Opcode.SWAP3 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(3),
+    ), 
+
+    Opcode.SWAP4 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(4),
+    ), 
+
+    Opcode.SWAP5 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(5),
+    ), 
+
+    Opcode.SWAP6 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(6),
+    ), 
+
+    Opcode.SWAP7 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(7),
+    ), 
+
+    Opcode.SWAP8 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(8),
+    ), 
+
+    Opcode.SWAP9 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(9),
+    ), 
+
+    Opcode.SWAP10 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(10),
+    ), 
+
+    Opcode.SWAP11 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(11),
+    ), 
+
+    Opcode.SWAP12 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(12),
+    ),
+
+    Opcode.SWAP13 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(13),
+    ), 
+
+    Opcode.SWAP14 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(14),
+    ), 
+
+    Opcode.SWAP15 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(15),
+    ), 
+
+    Opcode.SWAP16 : EVMInstruction(
+        gas_cost=0,
+        execute=makeSwapOp(16),
+    ), 
     Opcode.ADD : EVMInstruction(
         gas_cost=0,
         execute=opAdd,
@@ -640,7 +633,6 @@ ReferenceTable: dict = {
         gas_cost=0,
         execute=opExp,
     ),
-
 
     Opcode.JUMP : EVMInstruction(
         gas_cost=0,
@@ -735,6 +727,11 @@ ReferenceTable: dict = {
     Opcode.CALLDATALOAD : EVMInstruction(
         gas_cost=0,
         execute=opCallDataLoad,
+    ),
+
+    Opcode.STOP : EVMInstruction(
+        gas_cost=0,
+        execute=None,
     )
 }
 
