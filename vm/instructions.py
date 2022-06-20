@@ -58,23 +58,22 @@ def opMod(pc: ProgramCounter, interp, ctx: MachineContext):
 
 def opAddMod(pc: ProgramCounter, interp, ctx: MachineContext):
     x, y, n = ctx.stack.pop(), ctx.stack.pop(), ctx.stack.pop()
-    z: int = (x+y) % n
+    z: int = ((x+y) % n) & MAX_UINT_256
     ctx.stack.push(z)
 
 def opMulMod(pc: ProgramCounter, interp, ctx: MachineContext):
     x, y, n = ctx.stack.pop(), ctx.stack.pop(), ctx.stack.pop()
-    z: int = (x*y) % n
+    z: int = ((x*y) % n) & MAX_UINT_256
     ctx.stack.push(z)
 
 def opExp(pc: ProgramCounter, interp, ctx: MachineContext):
     x, y = ctx.stack.pop(), ctx.stack.pop()
-    z: int = x ** y
+    z: int = (x ** y) & MAX_UINT_256
 
     ctx.stack.push(z)
 
 def opJump(pc: ProgramCounter, interp, ctx: MachineContext):
     dest = ctx.stack.pop()
-    print("Jumping to ", dest)
     pc.set(dest)
 
 def opJumpDest(pc: ProgramCounter, interp, ctx: MachineContext):
@@ -174,8 +173,13 @@ def opShr(pc: ProgramCounter, interp, ctx: MachineContext):
 def opSar(pc: ProgramCounter, interp, ctx: MachineContext):
     shift, value = ctx.stack.pop(), ctx.stack.pop()
     
-    shifted_value = value >> shift
-    result = shifted_value & MAX_256_HEX
+    if shift == MAX_256_HEX:
+        result = 0
+
+    else:
+        shifted_value = value >> shift
+        result = shifted_value & MAX_256_HEX
+        
     ctx.stack.push(result)
 
 def opSha3(pc: ProgramCounter, interp, ctx: MachineContext):
