@@ -12,7 +12,10 @@ from vm.constants import (
 
 
 class EVMInterpreter:
-    scope_ctx = None
+
+    def __init__(self, storage):
+        self.scope_ctx = None
+        self.storage = storage
 
     def run(self, contract: Contract) -> CompletedExecution:
         
